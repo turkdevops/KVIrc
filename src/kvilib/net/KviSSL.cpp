@@ -322,22 +322,10 @@ void KviSSL::shutdown()
 {
 	if(m_pSSL)
 	{
-		//avoid to die on a SIGPIPE if the connection has close (SSL_shutdown can call send())
-		//see bug #440
+		// At least attempt to shutdown the connection gracefully
+		if(!SSL_in_init(m_pSSL))
+			SSL_shutdown(m_pSSL);
 
-#if !(defined(COMPILE_ON_WINDOWS) || defined(COMPILE_ON_MINGW))
-		// ignore SIGPIPE
-		signal(SIGPIPE, SIG_IGN);
-		// At least attempt to shutdown the connection gracefully
-		if(!SSL_in_init(m_pSSL))
-			SSL_shutdown(m_pSSL);
-		//restore normal SIGPIPE behaviour.
-		signal(SIGPIPE, SIG_DFL);
-#else
-		// At least attempt to shutdown the connection gracefully
-		if(!SSL_in_init(m_pSSL))
-			SSL_shutdown(m_pSSL);
-#endif
 		SSL_free(m_pSSL);
 		m_pSSL = nullptr;
 	}
